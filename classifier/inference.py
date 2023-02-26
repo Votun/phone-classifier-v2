@@ -2,11 +2,10 @@
 import torch
 from torchvision import transforms
 
-import preprocess as prep
-from preprocess import PhoneDataset
+from classifier.preprocess import PhoneDataset
 
 
-def judge_image(image_file, model):
+def judge_image(image_file):
     image = PhoneDataset.load_sample(image_file)
     image = PhoneDataset.prepare_sample(image)
     transform = transforms.Compose([
@@ -14,6 +13,8 @@ def judge_image(image_file, model):
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     image = transform(image)
+    model = torch.load("classifier/models/model_resnet18.pth")
+    model.eval()
     logits = model(image)
     result = torch.argmax(logits, dim=1)
     print(result)
