@@ -15,11 +15,28 @@ def train(train_df, val_df,
           sampler=None,
           batch_size=32,
           epochs=10,
-          device = torch.device('cpu')):
-
+          device=torch.device('cpu')):
+    """
+        Train function builds a dataloader based on provided datasets and starts train process of the provided model.
+        :param:
+            train_df: dataframe for fit loops. In fit loops updating of model weights is enabled.
+            val_df: dataframe for validation loops. In val loop model is not updated, i.e. it is not influenced by them.
+            model: a neural network model to be trained.
+            optimizer: a specific algorithm of gradient descent.
+            criterion: loss function. Args - predicted values and real labels. This function is minimized via optimizer.
+            sampler: used in dataloader in case of imbalanced classes.
+            batch_size: size of sample batches provided by dataloader. Inflicts on train speed and memory.
+            epochs: number of training loops. Optimal number depends on the task, here 15-20 is likely to be enough.
+            device: in case GPU is available.
+        :return:
+            history: list of tuples with values of loss and accuracy (% of correct answers) for train and eval loops.
+        :TODO:
+            -split train into fit_epoch and eval_epoch functions.
+            -test.
+            -download model weights from kaggle notebook.
+    """
     train_dataset = PhoneDataset(train_df)
     val_dataset = PhoneDataset(val_df)
-    # train loop:
     if sampler is None:
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     else:
@@ -32,46 +49,52 @@ def train(train_df, val_df,
 
     with tqdm(desc="epoch", total=epochs) as pbar_outer:
         for epoch in range(epochs):
-            # fit loop
+            # Fit loop.
+            (print("train_loop №{}".format(epoch)))
             model.train()
             tr_loss = 0.0
             tr_accuracy = 0.0
+            tr_accuracy_norm = len(train_loader)
             for x_batch, y_batch in train_loader:
                 x_batch = x_batch.to(device)
                 y_batch = y_batch.to(device)
                 optimizer.zero_grad()
-                outputs = model(x_batch)
+                outputs = model(x_batch)  # encode labels!!!!
                 loss = criterion(outputs, y_batch)
                 loss.backward()
                 optimizer.step()
-
-                tr_loss += loss
-
+                tr_loss += loss.detach()
                 preds = torch.argmax(outputs, 1)
-                tr_accuracy += torch.sum(preds == y_batch) / batch_size
+                acc = torch.sum(preds == y_batch) / batch_size
+                tr_accuracy += acc.detach()
+            tr_loss = tr_loss / tr_accuracy_norm
+            tr_accuracy = tr_accuracy / tr_accuracy_norm
 
-            # evaluation loop
+            # Evaluation loop.
+            (print("val_loop №{}".format(epoch)))
             model.eval()
             val_loss = 0.0
             val_accuracy = 0.0
+            val_accuracy_norm = len(val_loader)
             for x_batch, y_batch in val_loader:
                 x_batch = x_batch.to(device)
                 y_batch = y_batch.to(device)
                 with torch.set_grad_enabled(False):
                     outputs = model(x_batch)
                     val_loss += criterion(outputs, y_batch)
-
                     preds = torch.argmax(outputs, 1)
-                    val_accuracy += torch.sum(preds == y_batch) / batch_size
-
-            history.append((tr_loss.detach().to('cpu').numpy(),
-                            tr_accuracy.detach().to('cpu').numpy(),
-                            val_loss.detach().to('cpu').numpy(),
-                            val_accuracy.detach().to('cpu').numpy()))
+                    acc = torch.sum(preds == y_batch) / batch_size
+                    val_accuracy += acc.detach()
+            val_loss = val_loss / val_accuracy_norm
+            val_accuracy = val_accuracy / val_accuracy_norm
+            # Preparing epoch stats.
+            history.append((tr_loss.to('cpu').numpy(),
+                            tr_accuracy.to('cpu').numpy(),
+                            val_loss.to('cpu').numpy(),
+                            val_accuracy.to('cpu').numpy()))
             pbar_outer.update(1)
             tqdm.write(log_template.format(ep=epoch + 1, t_loss=tr_loss,
                                            v_loss=val_loss, t_acc=tr_accuracy, v_acc=val_accuracy))
-
     return history
 
 
@@ -120,6 +143,7 @@ if __name__ == "__main__":
     #binary_df = binary_df.reset_index()
     train_dataframe, val_dataframe = train_test_split(binary_df, train_size=0.8, shuffle=False)
     val_dataframe = val_dataframe.reset_index()
+
     # Set pretrained model and its fc-layers.
     weighted_sampler = prep.get_weighted_sampler(train_dataframe)
     pretrained_model = models.resnet18(pretrained=True)
@@ -151,4 +175,3 @@ if __name__ == "__main__":
     }
 
     torch.save(checkpoint, './models/model_resnet18.pth')
-
