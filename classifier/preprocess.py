@@ -13,10 +13,13 @@ from PIL import Image
 
 RESCALE_SIZE = 224
 
+
 class PhoneDataset(Dataset):
-    # Dataset class. __getItem__ returns pair image-label.
-    # Image - torch.Tensor of shape [3, RESCALE_SIZE, RESCALE_SIZE].
-    # Labels - {0, 1}. 1 Corresponds to image of a phone.
+    """
+        Dataset class. __getItem__ returns pair image-label.
+        Image - torch.Tensor of shape [3, RESCALE_SIZE, RESCALE_SIZE].
+        Labels - {0, 1}. 1 Corresponds to image of a phone.
+    """
     def __init__(self, df):
         super().__init__()
         self.files = df['Image_File']
@@ -81,11 +84,13 @@ def correct_names_in_df(data):
 
 
 def image_is_correct(file_path):
+    """
+        Some images are grayscale. They are few and thus are filtered
+    """
     img = PhoneDataset.load_sample(file_path)
     img = PhoneDataset.prepare_sample(img)
     img = np.array(img / 255, dtype='float32')
     if img.shape != (224, 224, 3):
-        #print(img.shape)
         return False
     else:
         return True

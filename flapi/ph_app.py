@@ -21,5 +21,6 @@ def check_phone_model():
         result = judge_image(file)
         args["method"] = "POST"
         args["result"] = result
+        args["image"] = file
     return render_template("check.html", args=args)
 
