@@ -88,7 +88,7 @@ ENV/
 #data dirs
 data/
 test_data/
-classifier/models/model_resnet18.pth/
+classifier/trained_models/model_resnet18.pth/
 data.zip
 
 # Spyder project settings
@@ -190,4 +190,4 @@ fabric.properties
 
 # idea folder, uncomment if you don't need it
 # .idea
-/classifier/models/model_resnet18.pth
+/classifier/trained_models/model_resnet18.pth

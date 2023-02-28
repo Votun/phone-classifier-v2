@@ -174,4 +174,4 @@ if __name__ == "__main__":
         'optimizer': optimizer.state_dict()
     }
 
-    torch.save(checkpoint, './models/model_resnet18.pth')
+    torch.save(checkpoint, 'trained_models/model_resnet18.pth')

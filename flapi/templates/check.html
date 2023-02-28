@@ -6,15 +6,16 @@
 </head>
 <body>
     {% if args["method"] == "POST" %}
+        <img id="blah" src=args["resul alt="your image" />
         {% if args["result"] %}
-            <h1>Это настоящий телефон!</h1>
+            <h1>It's a Phone!!</h1>
         {% else %}
-            <h1>Не, не телефон</h1>
+            <h1>No, it's not a Phone...</h1>
         {% endif %}
     {% endif %}
     <form action="/" method="POST" enctype="multipart/form-data">
         <input type="file" name="file">
-        <button type="submit">Загрузить</button>
+        <button type="submit">Check</button>
     </form>
 </body>
 </html>
