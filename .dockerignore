@@ -1,0 +1,10 @@
+# Ignore virtual environment and git folder
+venv
+.git
+
+# Ignore datasets
+data
+test_inference
+
+# Ignore notebooks
+**/*.ipynb

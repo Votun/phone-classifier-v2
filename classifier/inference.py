@@ -55,3 +55,4 @@ if __name__ == "__main__":
     print(judge_image("../test_inference/iPhone-3.jpg"))
     print(judge_image("../test_inference/IPhone4.jpg"))
     print(judge_image("../test_inference/randomPhone.jpg"))
+    print(judge_image("../test_inference/test.jpg"))
