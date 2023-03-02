@@ -10,6 +10,69 @@ from preprocess import PhoneDataset
 import pandas as pd
 
 
+def fit_epoch(model, loader, batch_size, device):
+    """
+        Train loop. Each epoch fit epoch updates the weights of the model. Return stats of the epoch.
+        params:
+            model
+            loader
+            batch_size
+            device
+        output:
+            tr_loss: mean criterion over the train_set.
+            tr_accuracy: share of correct answers per epoch
+    """
+    model.train()
+    tr_loss = 0.0
+    tr_accuracy = 0.0
+    accuracy_norm = len(loader)
+    for x_batch, y_batch in loader:
+        x_batch = x_batch.to(device)
+        y_batch = y_batch.to(device)
+        optimizer.zero_grad()
+        outputs = model(x_batch)  # encode labels!!!!
+        loss = criterion(outputs, y_batch)
+        loss.backward()
+        optimizer.step()
+        tr_loss += loss.detach()
+        preds = torch.argmax(outputs, 1)
+        acc = torch.sum(preds == y_batch) / batch_size
+        tr_accuracy += acc.detach()
+    tr_loss = tr_loss / accuracy_norm
+    tr_accuracy = tr_accuracy / accuracy_norm
+    return tr_loss, tr_accuracy
+
+
+def eval_epoch(model, loader, batch_size, device):
+    """
+        Eval loop. Each epoch eval_epoch only calculates stats of the epoch over validation set.
+        params:
+            model
+            loader
+            batch_size
+            device
+        output:
+            val_loss: mean criterion over the validation_set.
+            val_accuracy: share of correct answers per epoch
+    """
+    model.eval()
+    val_loss = 0.0
+    val_accuracy = 0.0
+    accuracy_norm = len(loader)
+    for x_batch, y_batch in loader:
+        x_batch = x_batch.to(device)
+        y_batch = y_batch.to(device)
+        with torch.set_grad_enabled(False):
+            outputs = model(x_batch)
+            val_loss += criterion(outputs, y_batch) #TODO: criterion is defined outside of eval_epoch.
+            preds = torch.argmax(outputs, 1)
+            acc = torch.sum(preds == y_batch) / batch_size
+            val_accuracy += acc.detach()
+    val_loss = val_loss / accuracy_norm
+    val_accuracy = val_accuracy / accuracy_norm
+    return val_loss, val_accuracy
+
+
 def train(train_df, val_df,
           model, optimizer, criterion,
           sampler=None,
@@ -23,7 +86,7 @@ def train(train_df, val_df,
             val_df: dataframe for validation loops. In val loop model is not updated, i.e. it is not influenced by them.
             model: a neural network model to be trained.
             optimizer: a specific algorithm of gradient descent.
-            criterion: loss function. Args - predicted values and real labels. This function is minimized via optimizer.
+            criterion: loss function. params - predicted values and real labels. This function is minimized via optimizer.
             sampler: used in dataloader in case of imbalanced classes.
             batch_size: size of sample batches provided by dataloader. Inflicts on train speed and memory.
             epochs: number of training loops. Optimal number depends on the task, here 15-20 is likely to be enough.
@@ -31,11 +94,9 @@ def train(train_df, val_df,
         :return:
             history: list of tuples with values of loss and accuracy (% of correct answers) for train and eval loops.
         :TODO:
-            -split train into fit_epoch and eval_epoch functions.
             -test.
-            -download model weights from kaggle notebook.
     """
-    train_dataset = PhoneDataset(train_df)
+    train_dataset = PhoneDataset(train_df, mode='train')
     val_dataset = PhoneDataset(val_df)
     if sampler is None:
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -50,43 +111,11 @@ def train(train_df, val_df,
     with tqdm(desc="epoch", total=epochs) as pbar_outer:
         for epoch in range(epochs):
             # Fit loop.
-            (print("train_loop №{}".format(epoch)))
-            model.train()
-            tr_loss = 0.0
-            tr_accuracy = 0.0
-            tr_accuracy_norm = len(train_loader)
-            for x_batch, y_batch in train_loader:
-                x_batch = x_batch.to(device)
-                y_batch = y_batch.to(device)
-                optimizer.zero_grad()
-                outputs = model(x_batch)  # encode labels!!!!
-                loss = criterion(outputs, y_batch)
-                loss.backward()
-                optimizer.step()
-                tr_loss += loss.detach()
-                preds = torch.argmax(outputs, 1)
-                acc = torch.sum(preds == y_batch) / batch_size
-                tr_accuracy += acc.detach()
-            tr_loss = tr_loss / tr_accuracy_norm
-            tr_accuracy = tr_accuracy / tr_accuracy_norm
+            tr_loss, tr_accuracy = fit_epoch(model, train_loader, batch_size, device)
 
             # Evaluation loop.
-            (print("val_loop №{}".format(epoch)))
-            model.eval()
-            val_loss = 0.0
-            val_accuracy = 0.0
-            val_accuracy_norm = len(val_loader)
-            for x_batch, y_batch in val_loader:
-                x_batch = x_batch.to(device)
-                y_batch = y_batch.to(device)
-                with torch.set_grad_enabled(False):
-                    outputs = model(x_batch)
-                    val_loss += criterion(outputs, y_batch)
-                    preds = torch.argmax(outputs, 1)
-                    acc = torch.sum(preds == y_batch) / batch_size
-                    val_accuracy += acc.detach()
-            val_loss = val_loss / val_accuracy_norm
-            val_accuracy = val_accuracy / val_accuracy_norm
+            val_loss, val_accuracy = eval_epoch(model, val_loader, batch_size, device)
+
             # Preparing epoch stats.
             history.append((tr_loss.to('cpu').numpy(),
                             tr_accuracy.to('cpu').numpy(),
@@ -102,7 +131,7 @@ def plot_train_stats(hist):
     """
     Plots the statistic of train loops.
     Includes loss and accuracy values per train dataset and validation dataset.
-    :param hist: list of tuples. Each tuple cosists of four values: train loss & accuracy, validation loss & accuracy.
+    :param hist: list of tuples. Each tuple consists of four values: train loss & accuracy, validation loss & accuracy.
     :return: None
     """
     loss, acc, val_loss, val_acc = zip(*hist)
@@ -128,7 +157,7 @@ if __name__ == "__main__":
     meta_df = pd.read_csv("../data/4k_mobile_images/mobile_data_img.csv")
     IMG_URL = "../data/4k_mobile_images/"
     JUNK_IMG_URL = "../data/junk_photo"
-    RESCALE_SIZE = 224
+    RESCALE_SIZE = 100
     meta_df.Image_File = IMG_URL + meta_df.Image_File
     if torch.cuda.is_available():
         print("Train on GPU...")

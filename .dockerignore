@@ -5,6 +5,11 @@ venv
 # Ignore datasets
 data
 test_inference
+classifier/models
 
 # Ignore notebooks
 **/*.ipynb
+
+#Ignore scripts
+classifier/dir_renaming.py
+classifier/train.py

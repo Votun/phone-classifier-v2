@@ -1,4 +1,5 @@
 FROM python:latest
+FROM pytorch/pytorch:latest
 
 COPY . .
 
