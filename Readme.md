@@ -21,6 +21,7 @@ phone-classifier-v2 project nests two packages: classifier and flapi; test_infer
 
 **Нужное для работы** - flapi, preprocess, inference, папка trained_models. 
 Обученные модели весят немало, гит иногда их грузить отказывается. Пока что. 
+
 ---
 ## TODO. v0.1.0
 1. Точность модели оставляет желать лучшего. Необходим тюнинг гиперпараметров и дальнейшая проработка гипотез: DONE
