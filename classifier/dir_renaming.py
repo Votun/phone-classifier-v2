@@ -1,10 +1,12 @@
 import os
 import re
 
+
 def regex_correct(filename: str):
     print(filename)
     extra = re.search("_(.+?)\.", filename.split('/')[-1]).group(1)
     return filename.replace(extra, '')
+
 
 for dirpath, dirs, files in os.walk("../data/mobile_images/mobile_images/"):
     print("Hello")

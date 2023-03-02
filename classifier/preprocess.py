@@ -11,7 +11,7 @@ import torch
 from tqdm import tqdm
 from PIL import Image
 
-RESCALE_SIZE = 224
+RESCALE_SIZE = 100
 
 
 class PhoneDataset(Dataset):
@@ -20,10 +20,11 @@ class PhoneDataset(Dataset):
         Image - torch.Tensor of shape [3, RESCALE_SIZE, RESCALE_SIZE].
         Labels - {0, 1}. 1 Corresponds to image of a phone.
     """
-    def __init__(self, df):
+    def __init__(self, df, mode = 'test'):
         super().__init__()
         self.files = df['Image_File']
         self.labels = df['Label']  # !! Brand
+        self.mode = mode
 
     def __len__(self):
         return len(self.files)
@@ -35,12 +36,18 @@ class PhoneDataset(Dataset):
         x = np.array(x / 255, dtype='float32')
 
         # RuntimeError: output with shape [1, 224, 224] doesn't match the broadcast shape [3, 224, 224]
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(degrees=45),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
+        if self.mode != "train":
+            transform = transforms.Compose([
+                transforms.ToTensor(),
+                # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(degrees=45),
+                # transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            ])
         try:
             x = transform(x)
         except RuntimeError:
@@ -90,7 +97,7 @@ def image_is_correct(file_path):
     img = PhoneDataset.load_sample(file_path)
     img = PhoneDataset.prepare_sample(img)
     img = np.array(img / 255, dtype='float32')
-    if img.shape != (224, 224, 3):
+    if img.shape != (RESCALE_SIZE, RESCALE_SIZE, 3):
         return False
     else:
         return True

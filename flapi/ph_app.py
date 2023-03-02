@@ -13,6 +13,7 @@ def check_phone_model():
     Flask API for phone model checking.
     Asks for a photo of a model, returns True/False.
     :return: bool
+    TODO: cool template for output
     '''
     print(os.getcwd())
     args = {"method": "GET"}
