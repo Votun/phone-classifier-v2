@@ -2,7 +2,7 @@
 ---
 This module is a image classifier model with simple flask deploy block.
 The model defines whether there is a phone on the image or not.
-Baseline version.
+Baseline prototype. Eventual task is more complicated and demands more of data engineering, however ML-part should not be more sophisticated than the prototype.
 
 ## Structure
 phone-classifier-v2 project nests two packages: classifier and flapi; test_inference directory; standart starting .py files
