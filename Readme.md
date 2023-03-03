@@ -1,6 +1,6 @@
 # Readme. Classifier module
 ---
-This module is a image classifier model with simple flask deploy block.
+This module is an image classifier model with simple flask deploy block.
 The model defines whether there is a phone on the image or not.
 Baseline prototype. Eventual task is more complicated and demands more of data engineering, however ML-part should not be more sophisticated than the prototype.
 
